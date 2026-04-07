@@ -1,4 +1,4 @@
-﻿services:
+services:
   zjmf:
     build:
       context: ../..
@@ -13,6 +13,7 @@
     environment:
       TZ: Asia/Shanghai
       APP_DIR: /var/www/html
+      ENABLE_SWOOLE_LOADER: ${ENABLE_SWOOLE_LOADER:-0}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:

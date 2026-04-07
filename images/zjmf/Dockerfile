@@ -7,9 +7,10 @@ ARG APP_SOURCE_SUBDIR=10.4.6
 ENV APP_DOCUMENT_ROOT=/var/www/html/public \
     APP_SEED_DIR=/opt/zjmf-seed \
     DEBIAN_FRONTEND=noninteractive \
+    ENABLE_SWOOLE_LOADER=0 \
     TZ=${TZ}
 
-COPY images/zjmf/files/swoole_loader_73_nts.so /tmp/swoole_loader_73_nts.so
+COPY images/zjmf/files/swoole_loader_73_zts.so /tmp/swoole_loader_73_zts.so
 
 RUN set -eux; \
     apt-get update; \
@@ -83,11 +84,10 @@ RUN set -eux; \
     tar -xzf /tmp/ioncube.tar.gz -C /tmp; \
     ext_dir="$(php-config --extension-dir)"; \
     cp "/tmp/ioncube/ioncube_loader_lin_7.3.so" "${ext_dir}/ioncube_loader_lin_7.3.so"; \
-    cp /tmp/swoole_loader_73_nts.so "${ext_dir}/swoole_loader_73_nts.so"; \
+    cp /tmp/swoole_loader_73_zts.so "${ext_dir}/swoole_loader_73_zts.so"; \
     echo "zend_extension=${ext_dir}/ioncube_loader_lin_7.3.so" > /usr/local/etc/php/conf.d/00-ioncube.ini; \
-    echo "extension=swoole_loader_73_nts.so" > /usr/local/etc/php/conf.d/01-swoole-loader.ini; \
     test -f "${ext_dir}/ioncube_loader_lin_7.3.so"; \
-    test -f "${ext_dir}/swoole_loader_73_nts.so"
+    test -f "${ext_dir}/swoole_loader_73_zts.so"
 
 RUN set -eux; \
     apt-get purge -y \
@@ -100,7 +100,7 @@ RUN set -eux; \
         libpng-dev \
         libssl-dev \
         libzip-dev; \
-    rm -rf /var/lib/apt/lists/* /tmp/ioncube /tmp/ioncube.tar.gz /tmp/swoole_loader_73_nts.so; \
+    rm -rf /var/lib/apt/lists/* /tmp/ioncube /tmp/ioncube.tar.gz /tmp/swoole_loader_73_zts.so; \
     rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 
 COPY images/zjmf/files/php.ini /usr/local/etc/php/conf.d/99-zjmf.ini

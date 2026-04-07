@@ -1,4 +1,4 @@
-﻿# image-forge
+# image-forge
 
 统一管理和发布各类容器镜像的构建仓库。
 
@@ -22,7 +22,7 @@ image-forge/
       files/
         entrypoint.sh
         php.ini
-        swoole_loader_73_nts.so
+        swoole_loader_73_zts.so
 
   CHANGELOG.md
 ```

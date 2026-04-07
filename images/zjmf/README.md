@@ -1,4 +1,4 @@
-﻿# ZJMF 镜像
+# ZJMF 镜像
 
 该目录用于构建内置 ZJMF-CBAP 10.4.6 源码的运行环境镜像。
 
@@ -49,4 +49,5 @@ GitHub Actions 会自动将该镜像发布到：
 - 镜像默认已内置 ZJMF-CBAP `10.4.6` 程序源码
 - 空目录挂载到 `/var/www/html` 时会在首次启动自动初始化
 - 初始化只在目标目录为空时执行，不会覆盖已有站点文件
-- `swoole_loader_73_nts.so` 位于 `images/zjmf/files/`，构建时会自动复制并启用
+- `swoole_loader_73_zts.so` 位于 `images/zjmf/files/`，镜像会内置该文件，但默认不启用
+- 当前基础镜像为 `php:7.3-fpm`，属于非 ZTS 运行时；即使设置 `ENABLE_SWOOLE_LOADER=1`，入口脚本也会在非 ZTS 环境下自动跳过加载
