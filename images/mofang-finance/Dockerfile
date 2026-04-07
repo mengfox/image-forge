@@ -14,71 +14,18 @@ COPY images/mofang-finance/files/swoole_loader_73_zts.so /tmp/swoole_loader_73_z
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        libcurl4-openssl-dev \
-        libfreetype6-dev \
-        libgmp-dev \
-        libicu-dev \
-        libjpeg62-turbo-dev \
-        libonig-dev \
-        libpng-dev \
-        libssl-dev \
-        libxml2-dev \
-        libzip-dev \
-        nginx \
-        supervisor \
-        unzip \
-        tzdata; \
-    rm -rf /var/lib/apt/lists/*; \
+        ca-certificates curl libcurl4-openssl-dev libfreetype6-dev libgmp-dev libicu-dev \
+        libjpeg62-turbo-dev libonig-dev libpng-dev libssl-dev libxml2-dev libzip-dev \
+        nginx supervisor unzip tzdata cron; \
+    \
     ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime; \
-    echo "${TZ}" > /etc/timezone
-
-RUN set -eux; \
-    mkdir -p /tmp/app-src "${APP_SEED_DIR}"; \
-    unzip -q "${APP_PACKAGE_FILE}" -d /tmp/app-src; \
-    src_dir="$(find /tmp/app-src -mindepth 1 -maxdepth 1 -type d | head -n 1)"; \
-    [ -n "${src_dir}" ]; \
-    cp -a "${src_dir}/." "${APP_SEED_DIR}/"; \
-    test -f "${APP_SEED_DIR}/public/index.php"; \
-    rm -rf /tmp/app-src
-
-RUN set -eux; \
+    echo "${TZ}" > /etc/timezone; \
+    \
     docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/; \
     docker-php-ext-install -j"$(nproc)" \
-        bcmath \
-        curl \
-        exif \
-        ftp \
-        gd \
-        gettext \
-        gmp \
-        intl \
-        mbstring \
-        mysqli \
-        pdo_mysql \
-        soap \
-        sockets \
-        sysvmsg \
-        sysvsem \
-        sysvshm \
-        xml \
-        zip; \
-    php -m | grep -Ei '^fileinfo$' >/dev/null; \
-    php -m | grep -Ei '^bcmath$' >/dev/null; \
-    php -m | grep -Ei '^curl$' >/dev/null; \
-    php -m | grep -Ei '^gd$' >/dev/null; \
-    php -m | grep -Ei '^gmp$' >/dev/null; \
-    php -m | grep -Ei '^intl$' >/dev/null; \
-    php -m | grep -Ei '^mbstring$' >/dev/null; \
-    php -m | grep -Ei '^mysqli$' >/dev/null; \
-    php -m | grep -Ei '^pdo_mysql$' >/dev/null; \
-    php -m | grep -Ei '^soap$' >/dev/null; \
-    php -m | grep -Ei '^xml$' >/dev/null; \
-    php -m | grep -Ei '^zip$' >/dev/null; \
-    php -r "exit(extension_loaded('gd') && !empty(gd_info()['FreeType Support']) ? 0 : 1);"
-
-RUN set -eux; \
+        bcmath curl exif ftp gd gettext gmp intl mbstring mysqli pdo_mysql soap sockets sysvmsg sysvsem sysvshm xml zip; \
+    \
+    # 安装 Loaders (ionCube & Swoole) \
     arch="$(dpkg --print-architecture)"; \
     case "${arch}" in \
         amd64) ioncube_arch='x86-64' ;; \
@@ -92,23 +39,28 @@ RUN set -eux; \
     cp /tmp/swoole_loader_73_zts.so "${ext_dir}/swoole_loader_73_zts.so"; \
     echo "zend_extension=${ext_dir}/ioncube_loader_lin_7.3.so" > /usr/local/etc/php/conf.d/00-ioncube.ini; \
     echo "extension=swoole_loader_73_zts.so" > /usr/local/etc/php/conf.d/01-swoole-loader.ini; \
-    test -f "${ext_dir}/ioncube_loader_lin_7.3.so"; \
-    test -f "${ext_dir}/swoole_loader_73_zts.so"
+    \
+    # 清理构建依赖 \
+    apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+        libcurl4-openssl-dev libfreetype6-dev libgmp-dev libicu-dev libjpeg62-turbo-dev \
+        libonig-dev libpng-dev libssl-dev libxml2-dev libzip-dev; \
+    rm -rf /var/lib/apt/lists/* /tmp/ioncube /tmp/ioncube.tar.gz /tmp/swoole_loader_73_zts.so; \
+    rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf; \
+    \
+    # 配置定时任务 (每分钟执行一次) \
+    echo "* * * * * root . /etc/profile; /usr/local/bin/php /var/www/html/think cron >> /var/log/cron.log 2>&1" > /etc/cron.d/mofang-cron; \
+    chmod 0644 /etc/cron.d/mofang-cron; \
+    touch /var/log/cron.log; \
+    ln -sf /dev/stdout /var/log/cron.log
 
 RUN set -eux; \
-    apt-get purge -y \
-        libcurl4-openssl-dev \
-        libfreetype6-dev \
-        libgmp-dev \
-        libicu-dev \
-        libjpeg62-turbo-dev \
-        libonig-dev \
-        libpng-dev \
-        libssl-dev \
-        libxml2-dev \
-        libzip-dev; \
-    rm -rf /var/lib/apt/lists/* /tmp/ioncube /tmp/ioncube.tar.gz /tmp/mofang-finance.zip /tmp/swoole_loader_73_zts.so; \
-    rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
+    mkdir -p /tmp/app-src "${APP_SEED_DIR}"; \
+    unzip -q "${APP_PACKAGE_FILE}" -d /tmp/app-src; \
+    src_dir="$(find /tmp/app-src -mindepth 1 -maxdepth 1 -type d | head -n 1)"; \
+    [ -n "${src_dir}" ]; \
+    cp -a "${src_dir}/." "${APP_SEED_DIR}/"; \
+    test -f "${APP_SEED_DIR}/public/index.php"; \
+    rm -rf /tmp/app-src /tmp/mofang-finance.zip
 
 COPY images/mofang-finance/files/php.ini /usr/local/etc/php/conf.d/99-mofang-finance.ini
 COPY images/mofang-finance/files/entrypoint.sh /usr/local/bin/mofang-finance-entrypoint
@@ -169,6 +121,15 @@ RUN set -eux; \
         '[program:php-fpm]' \
         'command=docker-php-entrypoint php-fpm --nodaemonize' \
         'priority=10' \
+        'autorestart=true' \
+        'stdout_logfile=/dev/fd/1' \
+        'stdout_logfile_maxbytes=0' \
+        'stderr_logfile=/dev/fd/2' \
+        'stderr_logfile_maxbytes=0' \
+        '' \
+        '[program:cron]' \
+        'command=cron -f' \
+        'priority=30' \
         'autorestart=true' \
         'stdout_logfile=/dev/fd/1' \
         'stdout_logfile_maxbytes=0' \
