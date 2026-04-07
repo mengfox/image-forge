@@ -105,16 +105,16 @@ RUN set -eux; \
 
 COPY images/zjmf/files/php.ini /usr/local/etc/php/conf.d/99-zjmf.ini
 COPY images/zjmf/files/entrypoint.sh /usr/local/bin/zjmf-entrypoint
+COPY images/zjmf/files/automation-loop.sh /usr/local/bin/zjmf-automation-loop
 
 RUN set -eux; \
     if [ "$(head -c 3 /usr/local/bin/zjmf-entrypoint | od -An -t x1 | tr -d ' \n')" = "efbbbf" ]; then \
         tail -c +4 /usr/local/bin/zjmf-entrypoint > /usr/local/bin/zjmf-entrypoint.clean; \
         mv /usr/local/bin/zjmf-entrypoint.clean /usr/local/bin/zjmf-entrypoint; \
     fi; \
-    sed -i 's/\r$//' /usr/local/bin/zjmf-entrypoint; \
-    chmod +x /usr/local/bin/zjmf-entrypoint; \
+    sed -i 's/\r$//' /usr/local/bin/zjmf-entrypoint /usr/local/bin/zjmf-automation-loop; \
+    chmod +x /usr/local/bin/zjmf-entrypoint /usr/local/bin/zjmf-automation-loop; \
     mkdir -p /run/php /var/log/supervisor /var/www/html; \
-    cp -a "${APP_SEED_DIR}/." /var/www/html/; \
     printf '%s\n' \
         'server {' \
         '    listen 80;' \
@@ -172,6 +172,24 @@ RUN set -eux; \
         '[program:nginx]' \
         'command=/usr/sbin/nginx -g "daemon off;"' \
         'priority=20' \
+        'autorestart=true' \
+        'stdout_logfile=/dev/fd/1' \
+        'stdout_logfile_maxbytes=0' \
+        'stderr_logfile=/dev/fd/2' \
+        'stderr_logfile_maxbytes=0' \
+        '' \
+        '[program:zjmf-cron]' \
+        'command=/usr/local/bin/zjmf-automation-loop /var/www/html/cron/cron.php 60 cron' \
+        'priority=30' \
+        'autorestart=true' \
+        'stdout_logfile=/dev/fd/1' \
+        'stdout_logfile_maxbytes=0' \
+        'stderr_logfile=/dev/fd/2' \
+        'stderr_logfile_maxbytes=0' \
+        '' \
+        '[program:zjmf-task]' \
+        'command=/usr/local/bin/zjmf-automation-loop /var/www/html/cron/task.php 5 task' \
+        'priority=40' \
         'autorestart=true' \
         'stdout_logfile=/dev/fd/1' \
         'stdout_logfile_maxbytes=0' \
