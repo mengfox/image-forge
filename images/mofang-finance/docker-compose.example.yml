@@ -1,0 +1,25 @@
+services:
+  mofang-finance:
+    build:
+      context: ../..
+      dockerfile: images/mofang-finance/Dockerfile
+      args:
+        TZ: Asia/Shanghai
+    pull_policy: never
+    container_name: mofang-finance-app
+    ports:
+      - "${APP_PORT:-8088}:80"
+    environment:
+      TZ: Asia/Shanghai
+      APP_DIR: /var/www/html
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    volumes:
+      - ${APP_DATA_PATH:-./data/mofang-finance}:/var/www/html
+    restart: unless-stopped

@@ -1,10 +1,11 @@
-# image-forge
+﻿# image-forge
 
 统一管理和发布各类容器镜像的构建仓库。
 
 ## 当前镜像
 
-- `zjmf`：`images/zjmf`
+- `zjmf`：智简魔方业务管理系统 v10
+- `mofang-finance`：魔方财务系统 3.7.0
 
 ## 仓库结构
 
@@ -13,6 +14,7 @@ image-forge/
   .github/
     workflows/
       build-zjmf.yml
+      build-mofang-finance.yml
 
   images/
     zjmf/
@@ -20,9 +22,13 @@ image-forge/
       docker-compose.example.yml
       README.md
       files/
-        entrypoint.sh
-        php.ini
-        swoole_loader_73_zts.so
+
+    mofang-finance/
+      Dockerfile
+      docker-compose.example.yml
+      README.md
+      files/
+      source/
 
   CHANGELOG.md
 ```
@@ -31,13 +37,13 @@ image-forge/
 
 - 仓库名：`image-forge`
 - 镜像目录：`images/<image-name>/`
-- 工作流：`.github/workflows/build-<image-name>.yml` 或统一工作流
+- 工作流：`.github/workflows/build-<image-name>.yml`
 - GHCR 镜像：`ghcr.io/<owner>/image-forge/<image-name>:<tag>`
-- Docker Hub 镜像：`docker.io/<user>/<image-name>:<tag>` 或带统一前缀的仓库名
+- Docker Hub 镜像：`docker.io/<user>/<image-name>:<tag>`
 
 ## 发布说明
 
-当前 `zjmf` 镜像通过 GitHub Actions 自动构建，并发布到：
+当前镜像通过 GitHub Actions 自动构建，并发布到：
 
 - GitHub Container Registry
 - Docker Hub
