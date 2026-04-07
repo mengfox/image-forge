@@ -1,0 +1,52 @@
+﻿# image-forge
+
+统一管理和发布各类容器镜像的构建仓库。
+
+## 当前镜像
+
+- `zjmf`：`images/zjmf`
+
+## 仓库结构
+
+```text
+image-forge/
+  .github/
+    workflows/
+      build-zjmf.yml
+
+  images/
+    zjmf/
+      Dockerfile
+      docker-compose.example.yml
+      README.md
+      files/
+        entrypoint.sh
+        php.ini
+        swoole_loader_73_nts.so
+```
+
+## 命名规范
+
+- 仓库名：`image-forge`
+- 镜像目录：`images/<image-name>/`
+- 工作流：`.github/workflows/build-<image-name>.yml` 或统一工作流
+- GHCR 镜像：`ghcr.io/<owner>/image-forge/<image-name>:<tag>`
+- Docker Hub 镜像：`docker.io/<user>/<image-name>:<tag>` 或带统一前缀的仓库名
+
+## 发布说明
+
+当前 `zjmf` 镜像通过 GitHub Actions 自动构建，并发布到：
+
+- GitHub Container Registry
+- Docker Hub
+
+触发方式：
+
+- 推送到 `main`
+- 推送 `v*` 标签
+- 手动触发 `workflow_dispatch`
+
+## 使用说明
+
+具体镜像的构建方式、挂载方式和运行方式，请查看对应目录下的 `README.md`。
+
