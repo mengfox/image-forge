@@ -1,6 +1,6 @@
 ﻿# ZJMF 镜像
 
-该目录用于构建 ZJMF 运行环境镜像。
+该目录用于构建内置 ZJMF-CBAP 10.4.6 源码的运行环境镜像。
 
 ## 构建
 
@@ -18,20 +18,35 @@ docker compose build --no-cache
 docker compose up -d --no-build
 ```
 
-## 发布
+默认会把宿主机 `./data/zjmf` 挂载到容器内 `/var/www/html`。如果该目录为空，容器首次启动时会自动将镜像内置的 ZJMF 程序文件初始化进去。
+
+## 自动发布
 
 GitHub Actions 会自动将该镜像发布到：
 
 - `ghcr.io/<owner>/image-forge/zjmf`
-- `docker.io/<dockerhub-user>/image-forge-zjmf`
+- `docker.io/<dockerhub-user>/zjmf`
 
 仓库中需要提前配置以下 Secrets：
 
+- `GHCR_USERNAME`
+- `GHCR_TOKEN`
 - `DOCKERHUB_USERNAME`
 - `DOCKERHUB_TOKEN`
 
+说明：
+
+- `GHCR_TOKEN` 需要具备 `write:packages` 权限
+- 如果仓库是私有仓库，通常还需要同时具备 `repo` 权限
+- `DOCKERHUB_TOKEN` 请使用 Docker Hub Access Token，不要直接使用账号密码
+
+## 更新日志
+
+镜像变更记录见 [../../CHANGELOG.md](../../CHANGELOG.md) 中的 `zjmf` 条目。
+
 ## 说明
 
-- 宿主机源码目录应挂载到容器内的 `/var/www/html`
-- 挂载目录应为 ZJMF 项目根目录
+- 镜像默认已内置 ZJMF-CBAP `10.4.6` 程序源码
+- 空目录挂载到 `/var/www/html` 时会在首次启动自动初始化
+- 初始化只在目标目录为空时执行，不会覆盖已有站点文件
 - `swoole_loader_73_nts.so` 位于 `images/zjmf/files/`，构建时会自动复制并启用

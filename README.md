@@ -23,6 +23,8 @@ image-forge/
         entrypoint.sh
         php.ini
         swoole_loader_73_nts.so
+
+  CHANGELOG.md
 ```
 
 ## 命名规范
@@ -46,7 +48,10 @@ image-forge/
 - 推送 `v*` 标签
 - 手动触发 `workflow_dispatch`
 
+## 更新日志
+
+完整变更记录见 [CHANGELOG.md](./CHANGELOG.md)。
+
 ## 使用说明
 
 具体镜像的构建方式、挂载方式和运行方式，请查看对应目录下的 `README.md`。
-

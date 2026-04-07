@@ -1,8 +1,11 @@
-FROM php:7.3-fpm
+﻿FROM php:7.3-fpm
 
 ARG TZ=Asia/Shanghai
+ARG APP_DOWNLOAD_URL=https://codeload.github.com/idcsmart/ZJMF-CBAP/zip/refs/heads/main
+ARG APP_SOURCE_SUBDIR=10.4.6
 
 ENV APP_DOCUMENT_ROOT=/var/www/html/public \
+    APP_SEED_DIR=/opt/zjmf-seed \
     DEBIAN_FRONTEND=noninteractive \
     TZ=${TZ}
 
@@ -29,6 +32,16 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*; \
     ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime; \
     echo "${TZ}" > /etc/timezone
+
+RUN set -eux; \
+    mkdir -p /tmp/app-src "${APP_SEED_DIR}"; \
+    curl -fsSL "${APP_DOWNLOAD_URL}" -o /tmp/app.zip; \
+    unzip -q /tmp/app.zip -d /tmp/app-src; \
+    src_dir="$(find /tmp/app-src -mindepth 2 -maxdepth 2 -type d -name "${APP_SOURCE_SUBDIR}" | head -n 1)"; \
+    [ -n "${src_dir}" ]; \
+    cp -a "${src_dir}/." "${APP_SEED_DIR}/"; \
+    test -f "${APP_SEED_DIR}/public/index.php"; \
+    rm -rf /tmp/app-src /tmp/app.zip
 
 RUN set -eux; \
     docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/; \
@@ -95,8 +108,8 @@ COPY images/zjmf/files/entrypoint.sh /usr/local/bin/zjmf-entrypoint
 
 RUN set -eux; \
     chmod +x /usr/local/bin/zjmf-entrypoint; \
-    mkdir -p /run/php /var/log/supervisor; \
-    mkdir -p /var/www/html; \
+    mkdir -p /run/php /var/log/supervisor /var/www/html; \
+    cp -a "${APP_SEED_DIR}/." /var/www/html/; \
     printf '%s\n' \
         'server {' \
         '    listen 80;' \
@@ -160,7 +173,7 @@ RUN set -eux; \
         'stderr_logfile=/dev/fd/2' \
         'stderr_logfile_maxbytes=0' \
         > /etc/supervisor/conf.d/supervisord.conf; \
-    chown -R www-data:www-data /var/www/html
+    chown -R www-data:www-data "${APP_SEED_DIR}" /var/www/html
 
 WORKDIR /var/www/html
 
