@@ -5,7 +5,7 @@
 ## 当前镜像
 
 - `zjmf`：智简魔方业务管理系统 v10
-- `mofang-finance`：魔方财务系统 3.7.0
+- `zjmf-finance`：ZJMF 财务系统 3.7.0
 
 ## 仓库结构
 
@@ -14,7 +14,7 @@ image-forge/
   .github/
     workflows/
       build-zjmf.yml
-      build-mofang-finance.yml
+      build-zjmf-finance.yml
 
   images/
     zjmf/
@@ -23,7 +23,7 @@ image-forge/
       README.md
       files/
 
-    mofang-finance/
+    zjmf-finance/
       Dockerfile
       docker-compose.example.yml
       README.md

@@ -21,13 +21,13 @@
 - 将自动化任务收敛为镜像内置 `supervisord` 进程，1Panel 启动包装层不再重复注册。
 - 镜像内置自动化任务扩展为四条：`cron.php`、`task.php`、`on_demand_cron.php`、`task_notice.php`。
 
-### mofang-finance
+### zjmf-finance
 
-- 新增 `mofang-finance` 镜像目录，内置魔方财务系统 `3.7.0` 安装包。
+- 新增 `zjmf-finance` 镜像目录，内置 ZJMF 财务系统 `3.7.0` 安装包。
 - 镜像运行环境基于 `Nginx + PHP 7.3 FPM`，补齐 `gd`、`mysqli`、`pdo_mysql`、`intl`、`gmp`、`zip` 等常用扩展。
 - 集成 `ionCube Loader` 与 `swoole_loader_73_zts.so`，并按官方安装文档要求默认关闭 `opcache`。
 - 支持在挂载空目录时自动把镜像内置源码初始化到 `/var/www/html`。
 - 新增对应的 1Panel 本地应用模板“魔方财务系统”。
 - 1Panel 启动包装脚本支持把数据库地址、端口、用户名、密码、数据库名和后台路径预填到官方安装页 `public/install.html`。
 - 1Panel 初始化脚本只负责准备持久化目录，不修改基础镜像层，正式安装仍走官方安装流程。
-- 新增 `build-mofang-finance.yml`，支持把镜像自动发布到 GHCR 与 Docker Hub。
+- 新增 `build-zjmf-finance.yml`，支持把镜像自动发布到 GHCR 与 Docker Hub。��
