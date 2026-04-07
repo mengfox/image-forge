@@ -1,4 +1,4 @@
-﻿FROM php:7.3-fpm
+FROM php:7.3-fpm
 
 ARG TZ=Asia/Shanghai
 ARG APP_DOWNLOAD_URL=https://codeload.github.com/idcsmart/ZJMF-CBAP/zip/refs/heads/main
@@ -107,6 +107,11 @@ COPY images/zjmf/files/php.ini /usr/local/etc/php/conf.d/99-zjmf.ini
 COPY images/zjmf/files/entrypoint.sh /usr/local/bin/zjmf-entrypoint
 
 RUN set -eux; \
+    if [ "$(head -c 3 /usr/local/bin/zjmf-entrypoint | od -An -t x1 | tr -d ' \n')" = "efbbbf" ]; then \
+        tail -c +4 /usr/local/bin/zjmf-entrypoint > /usr/local/bin/zjmf-entrypoint.clean; \
+        mv /usr/local/bin/zjmf-entrypoint.clean /usr/local/bin/zjmf-entrypoint; \
+    fi; \
+    sed -i 's/\r$//' /usr/local/bin/zjmf-entrypoint; \
     chmod +x /usr/local/bin/zjmf-entrypoint; \
     mkdir -p /run/php /var/log/supervisor /var/www/html; \
     cp -a "${APP_SEED_DIR}/." /var/www/html/; \
