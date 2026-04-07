@@ -1,0 +1,24 @@
+services:
+  zjmf:
+    build:
+      context: ../..
+      dockerfile: images/zjmf/Dockerfile
+      args:
+        TZ: Asia/Shanghai
+    pull_policy: never
+    container_name: zjmf-app
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      TZ: Asia/Shanghai
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    volumes:
+      - ${APP_PATH:-/www/docker-build/ZJMF-CBAP/10.4.6}:/var/www/html
+    restart: unless-stopped
