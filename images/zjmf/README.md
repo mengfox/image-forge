@@ -18,7 +18,8 @@ docker compose build --no-cache
 docker compose up -d --no-build
 ```
 
-默认会把宿主机 `./data/zjmf` 挂载到容器内 `/var/www/html`。如果该目录为空，容器首次启动时会自动将镜像内置的 ZJMF 程序文件初始化进去。
+默认会把宿主机 `./data/zjmf` 挂载到容器内 `/var/www/html`。
+如果该目录为空，容器首次启动时会自动把镜像内置的 ZJMF 程序文件初始化进去。
 
 ## 自动发布
 
@@ -27,7 +28,7 @@ GitHub Actions 会自动将该镜像发布到：
 - `ghcr.io/<owner>/image-forge/zjmf`
 - `docker.io/<dockerhub-user>/zjmf`
 
-仓库中需要提前配置以下 Secrets：
+仓库需要提前配置这些 Secrets：
 
 - `GHCR_USERNAME`
 - `GHCR_TOKEN`
@@ -37,7 +38,7 @@ GitHub Actions 会自动将该镜像发布到：
 说明：
 
 - `GHCR_TOKEN` 需要具备 `write:packages` 权限
-- 如果仓库是私有仓库，通常还需要同时具备 `repo` 权限
+- 私有仓库通常还需要同时具备 `repo` 权限
 - `DOCKERHUB_TOKEN` 请使用 Docker Hub Access Token，不要直接使用账号密码
 
 ## 更新日志
@@ -50,4 +51,5 @@ GitHub Actions 会自动将该镜像发布到：
 - 空目录挂载到 `/var/www/html` 时会在首次启动自动初始化
 - 初始化只在目标目录为空时执行，不会覆盖已有站点文件
 - `swoole_loader_73_zts.so` 位于 `images/zjmf/files/`，镜像会内置该文件，但默认不启用
-- 当前基础镜像为 `php:7.3-fpm`，属于非 ZTS 运行时；即使设置 `ENABLE_SWOOLE_LOADER=1`，入口脚本也会在非 ZTS 环境下自动跳过加载
+- 当前基础镜像为 `php:7.3-fpm`，入口脚本会在非兼容环境下自动跳过 `swoole_loader`
+- 镜像内置 `supervisord` 会自动托管四个任务：`cron.php`、`task.php`、`on_demand_cron.php`、`task_notice.php`

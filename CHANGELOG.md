@@ -1,12 +1,22 @@
-# 閺囧瓨鏌婇弮銉ョ箶
+﻿# 更新日志
 
-閺堫剚鏋冨锝堫唶瑜?`image-forge` 娴犳挸绨辨稉顓犳畱闁插秷顩﹂崣妯绘纯閵?
+本仓库用于维护 `image-forge` 下的容器镜像与 1Panel 应用模板变更记录。
+
 ## 2026-04-07
 
 ### zjmf
 
-- 閺傛澘顤?`zjmf` 闂€婊冨剼閻╊喖缍嶉妴浣圭€鍝勪紣娴ｆ粍绁︽稉搴濊厬閺傚洩顕╅弰搴㈡瀮濡楋絻鈧?- 閺€顖涘瘮鐏忓棝鏆呴崓蹇氬殰閸斻劌褰傜敮鍐ㄥ煂 GHCR 娑?Docker Hub閵?- 鏉╂劘顢戦悳顖氼暔缂佺喍绔存稉?`Nginx + PHP 7.3 FPM`閿涘苯鑻熺悰銉╃秷 ZJMF 鐎瑰顥婇幍鈧棁鈧敮鍝ユ暏閹碘晛鐫嶉妴涔畂nCube 娑?`swoole_loader_73_zts.so`閵?- 闂€婊冨剼閺€閫涜礋閸愬懐鐤?`ZJMF-CBAP 10.4.6` 濠ф劗鐖滈敍宀€鈹栭惄顔肩秿閹稿倽娴囬崚?`/var/www/html` 閺冩湹绱伴崷銊╊浕濞嗏€虫儙閸斻劏鍤滈崝銊ュ灥婵瀵查妴?- 閺傛澘顤?`1panelstore/zjmf` 鎼存梻鏁ゅΟ鈩冩緲閿涘苯绨查悽銊ユ倳娑撹　鈧粍娅ょ粻鈧鏃€鏌熸稉姘缁狅紕鎮婄化鑽ょ埠v10閳ユ繐绱濋柅鍌炲帳 1Panel 鐎瑰顥婃稉搴㈠瘮娑斿懎瀵查惄顔肩秿閸掓繂顫愰崠鏍ф簚閺咁垬鈧?- 娣囶喖顦?`exec format error`閿涘苯鐨㈤崗銉ュ經閼存碍婀扮紒鐔剁娑撶儤妫?BOM閵嗕俯F 閹广垼顢戦敍灞借嫙閸︺劑鏆呴崓蹇旂€娲▉濞堥潧顤冮崝鐘冲床鐞涘奔绗?BOM 濞撳懐鎮婇妴?- 娣囶喖顦?`php-fpm` 閸?loader 瀹曗晜绨濈€佃壈鍤ч惃鍕儙閸斻劑妫舵０姗堢礉`swoole_loader_73_zts.so` 閻滀即绮拋銈呭彠闂傤叏绱濇禒鍛躬閺勬儳绱＄拋鍓х枂 `ENABLE_SWOOLE_LOADER=1` 娑?PHP 鏉╂劘顢戦弮鏈佃礋 ZTS 閺冭埖澧犳导姘儙閻劊鈧?- 鏂板 1Panel 鏁版嵁搴撳瓧娈甸€忎紶涓?config.php 鑷姩鐢熸垚閫昏緫锛氬綋 config.php 涓嶅瓨鍦ㄤ笖 config-simple.php 鍙瘑鍒椂锛屽鍣ㄤ細鏍规嵁 1Panel 濉啓鐨勬暟鎹簱淇℃伅灏濊瘯鑷姩鐢熸垚閰嶇疆鏂囦欢銆?
-- 根据实际项目结构修正配置模板路径：自动生成 config.php 时现使用 /public/install/config.php 作为模板来源，而不是根目录模板。
-
-- 移除镜像入口中旧的 config.php 自动生成逻辑，避免与 1Panel 安装流程产生冲突
-- 将自动化任务收敛为镜像内置 supervisord 进程，1Panel 启动包装层不再重复注册
+- 新增 `zjmf` 镜像目录、构建工作流和中文说明文档。
+- 支持同时发布到 GHCR 与 Docker Hub。
+- 镜像运行环境基于 `Nginx + PHP 7.3 FPM`，补齐 ZJMF 所需常用扩展。
+- 集成 `ionCube Loader` 与 `swoole_loader_73_zts.so`，默认关闭 `swoole_loader`，避免不兼容环境导致进程崩溃。
+- 镜像内置 `ZJMF-CBAP 10.4.6` 程序源码，并支持在挂载空目录时自动初始化到 `/var/www/html`。
+- 新增 1Panel 本地应用模板“智简魔方业务管理系统v10”。
+- 修复脚本文件 BOM/换行问题，解决 `exec format error`。
+- 修复旧版 `swoole_loader_73_nts.so` 导致的 `php-fpm` 崩溃问题，统一切换到 `swoole_loader_73_zts.so`。
+- 1Panel 安装流程改为仅预填数据库参数和后台目录，不再提前生成根目录 `config.php`，避免跳过官方安装步骤。
+- 按真实项目结构修正安装模板来源，使用 `/public/install/config.php` 作为安装流程模板来源。
+- 修复 1Panel 反向代理子路径下安装完成后后台地址错误的问题。
+- 移除镜像入口中旧的 `config.php` 自动生成逻辑，避免与 1Panel 安装流程产生冲突。
+- 将自动化任务收敛为镜像内置 `supervisord` 进程，1Panel 启动包装层不再重复注册。
+- 镜像内置自动化任务扩展为四条：`cron.php`、`task.php`、`on_demand_cron.php`、`task_notice.php`。

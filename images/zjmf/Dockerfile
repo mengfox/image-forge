@@ -195,6 +195,24 @@ RUN set -eux; \
         'stdout_logfile_maxbytes=0' \
         'stderr_logfile=/dev/fd/2' \
         'stderr_logfile_maxbytes=0' \
+        '' \
+        '[program:zjmf-on-demand-cron]' \
+        'command=/usr/local/bin/zjmf-automation-loop /var/www/html/cron/on_demand_cron.php 60 on-demand-cron' \
+        'priority=50' \
+        'autorestart=true' \
+        'stdout_logfile=/dev/fd/1' \
+        'stdout_logfile_maxbytes=0' \
+        'stderr_logfile=/dev/fd/2' \
+        'stderr_logfile_maxbytes=0' \
+        '' \
+        '[program:zjmf-task-notice]' \
+        'command=/usr/local/bin/zjmf-automation-loop /var/www/html/cron/task_notice.php 5 task-notice' \
+        'priority=60' \
+        'autorestart=true' \
+        'stdout_logfile=/dev/fd/1' \
+        'stdout_logfile_maxbytes=0' \
+        'stderr_logfile=/dev/fd/2' \
+        'stderr_logfile_maxbytes=0' \
         > /etc/supervisor/conf.d/supervisord.conf; \
     chown -R www-data:www-data "${APP_SEED_DIR}" /var/www/html
 
