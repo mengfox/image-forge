@@ -6,10 +6,15 @@ ENV APP_DOCUMENT_ROOT=/var/www/html/public \
     APP_SEED_DIR=/opt/zjmf-finance-seed \
     APP_PACKAGE_FILE=/tmp/zjmf-finance.zip \
     DEBIAN_FRONTEND=noninteractive \
-    TZ=${TZ}
+    TZ=${TZ} \
+    CRON_ENABLED=true \
+    CRON_COMMAND="php /var/www/html/think cron" \
+    CRON_INTERVAL_SECONDS=900 \
+    CRON_RUN_ON_START=false \
+    SESSION_DIR=/tmp/session
 
-COPY images/zjmf-finance/source/zjmf-finance-3.7.0.zip /tmp/zjmf-finance.zip
-COPY images/zjmf-finance/files/swoole_loader_73_zts.so /tmp/swoole_loader_73_zts.so
+COPY source/zjmf-finance-3.7.0.zip /tmp/zjmf-finance.zip
+COPY files/swoole_loader_73_zts.so /tmp/swoole_loader_73_zts.so
 
 RUN set -eux; \
     apt-get update; \
@@ -110,17 +115,16 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/* /tmp/ioncube /tmp/ioncube.tar.gz /tmp/zjmf-finance.zip /tmp/swoole_loader_73_zts.so; \
     rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 
-COPY images/zjmf-finance/files/php.ini /usr/local/etc/php/conf.d/99-zjmf-finance.ini
-COPY images/zjmf-finance/files/entrypoint.sh /usr/local/bin/zjmf-finance-entrypoint
+COPY files/php.ini /usr/local/etc/php/conf.d/99-zjmf-finance.ini
+COPY files/entrypoint.sh /usr/local/bin/zjmf-finance-entrypoint
+COPY files/fix-session-perms.sh /usr/local/bin/fix-session-perms
+COPY files/zjmf-finance-cron.sh /usr/local/bin/zjmf-finance-cron
 
 RUN set -eux; \
-    if [ "$(head -c 3 /usr/local/bin/zjmf-finance-entrypoint | od -An -t x1 | tr -d ' \n')" = "efbbbf" ]; then \
-        tail -c +4 /usr/local/bin/zjmf-finance-entrypoint > /usr/local/bin/zjmf-finance-entrypoint.clean; \
-        mv /usr/local/bin/zjmf-finance-entrypoint.clean /usr/local/bin/zjmf-finance-entrypoint; \
-    fi; \
-    sed -i 's/\r$//' /usr/local/bin/zjmf-finance-entrypoint; \
-    chmod +x /usr/local/bin/zjmf-finance-entrypoint; \
-    mkdir -p /run/php /var/log/supervisor /var/www/html; \
+    sed -i 's/\r$//' /usr/local/bin/zjmf-finance-entrypoint /usr/local/bin/fix-session-perms /usr/local/bin/zjmf-finance-cron; \
+    chmod +x /usr/local/bin/zjmf-finance-entrypoint /usr/local/bin/fix-session-perms /usr/local/bin/zjmf-finance-cron; \
+    mkdir -p /run/php /var/log/supervisor /var/www/html /tmp/session; \
+    chmod 777 /tmp/session; \
     printf '%s\n' \
         'server {' \
         '    listen 80;' \
@@ -170,6 +174,7 @@ RUN set -eux; \
         'command=docker-php-entrypoint php-fpm --nodaemonize' \
         'priority=10' \
         'autorestart=true' \
+        'startsecs=0' \
         'stdout_logfile=/dev/fd/1' \
         'stdout_logfile_maxbytes=0' \
         'stderr_logfile=/dev/fd/2' \
@@ -179,6 +184,17 @@ RUN set -eux; \
         'command=/usr/sbin/nginx -g "daemon off;"' \
         'priority=20' \
         'autorestart=true' \
+        'startsecs=0' \
+        'stdout_logfile=/dev/fd/1' \
+        'stdout_logfile_maxbytes=0' \
+        'stderr_logfile=/dev/fd/2' \
+        'stderr_logfile_maxbytes=0' \
+        '' \
+        '[program:zjmf-finance-cron]' \
+        'command=/usr/local/bin/zjmf-finance-cron' \
+        'priority=30' \
+        'autorestart=true' \
+        'startsecs=0' \
         'stdout_logfile=/dev/fd/1' \
         'stdout_logfile_maxbytes=0' \
         'stderr_logfile=/dev/fd/2' \

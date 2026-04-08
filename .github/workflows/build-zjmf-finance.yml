@@ -8,12 +8,10 @@ on:
       - "v*"
     paths:
       - ".github/workflows/build-zjmf-finance.yml"
-      - "images/_base/**"
       - "images/zjmf-finance/**"
   pull_request:
     paths:
       - ".github/workflows/build-zjmf-finance.yml"
-      - "images/_base/**"
       - "images/zjmf-finance/**"
   workflow_dispatch:
 
@@ -57,18 +55,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: 构建 Base 镜像
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./images/_base/Dockerfile
-          platforms: linux/amd64
-          push: false
-          load: true
-          tags: image-forge-base:latest
-          cache-from: type=gha,scope=base
-          cache-to: type=gha,scope=base,mode=max
-
       - name: 生成镜像元数据
         id: meta
         uses: docker/metadata-action@v5
@@ -88,10 +74,8 @@ jobs:
       - name: 构建并推送
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./images/zjmf-finance
           file: ./images/zjmf-finance/Dockerfile
-          build-args: |
-            BASE_IMAGE=image-forge-base:latest
           platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}

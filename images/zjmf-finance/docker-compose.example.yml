@@ -1,25 +1,19 @@
 services:
   zjmf-finance:
     build:
-      context: ../..
-      dockerfile: images/zjmf-finance/Dockerfile
-      args:
-        TZ: Asia/Shanghai
-    pull_policy: never
-    container_name: zjmf-finance-app
+      context: ./images/zjmf-finance
+      dockerfile: Dockerfile
+    image: zjmf-finance:latest
+    container_name: zjmf-finance
+    restart: unless-stopped
     ports:
-      - "${APP_PORT:-8088}:80"
+      - "8080:80"
     environment:
       TZ: Asia/Shanghai
-      APP_DIR: /var/www/html
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/ >/dev/null || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
+      CRON_ENABLED: "true"
+      CRON_COMMAND: "php /var/www/html/think cron"
+      CRON_INTERVAL_SECONDS: "900"
+      CRON_RUN_ON_START: "false"
+      SESSION_DIR: "/tmp/session"
     volumes:
-      - ${APP_DATA_PATH:-./data/zjmf-finance}:/var/www/html
-    restart: unless-stopped
+      - ../../data/zjmf-finance:/var/www/html

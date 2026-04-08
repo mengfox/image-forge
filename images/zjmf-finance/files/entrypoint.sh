@@ -3,6 +3,7 @@ set -eu
 
 APP_DIR="${APP_DIR:-/var/www/html}"
 APP_SEED_DIR="${APP_SEED_DIR:-/opt/zjmf-finance-seed}"
+SESSION_DIR="${SESSION_DIR:-/tmp/session}"
 
 is_effectively_empty_dir() {
     [ -d "$1" ] || return 0
@@ -32,7 +33,18 @@ fix_permissions() {
     fi
 }
 
+fix_session_permissions() {
+    if [ ! -d "${SESSION_DIR}" ]; then
+        mkdir -p "${SESSION_DIR}" || true
+    fi
+
+    if [ -d "${SESSION_DIR}" ]; then
+        chmod 777 "${SESSION_DIR}" || true
+    fi
+}
+
 maybe_seed_app
 fix_permissions
+fix_session_permissions
 
 exec docker-php-entrypoint "$@"
