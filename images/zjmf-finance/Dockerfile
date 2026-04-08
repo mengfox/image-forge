@@ -14,7 +14,7 @@ ENV APP_DOCUMENT_ROOT=/var/www/html/public \
     SESSION_DIR=/tmp/session
 
 COPY source/zjmf-finance-3.7.0.zip /tmp/zjmf-finance.zip
-COPY files/swoole_loader_73_zts.so /tmp/swoole_loader_73_zts.so
+COPY files/ /opt/zjmf-build-files/
 
 RUN set -eux; \
     apt-get update; \
@@ -94,11 +94,27 @@ RUN set -eux; \
     tar -xzf /tmp/ioncube.tar.gz -C /tmp; \
     ext_dir="$(php-config --extension-dir)"; \
     cp "/tmp/ioncube/ioncube_loader_lin_7.3.so" "${ext_dir}/ioncube_loader_lin_7.3.so"; \
-    cp /tmp/swoole_loader_73_zts.so "${ext_dir}/swoole_loader_73_zts.so"; \
     echo "zend_extension=${ext_dir}/ioncube_loader_lin_7.3.so" > /usr/local/etc/php/conf.d/00-ioncube.ini; \
-    echo "extension=swoole_loader_73_zts.so" > /usr/local/etc/php/conf.d/01-swoole-loader.ini; \
     test -f "${ext_dir}/ioncube_loader_lin_7.3.so"; \
-    test -f "${ext_dir}/swoole_loader_73_zts.so"
+    loader_file=''; \
+    for candidate in /opt/zjmf-build-files/swoole_loader_73_nts.so /opt/zjmf-build-files/swoole_loader_73_zts.so; do \
+        if [ -f "${candidate}" ]; then loader_file="${candidate}"; break; fi; \
+    done; \
+    if [ -n "${loader_file}" ]; then \
+        loader_name="$(basename "${loader_file}")"; \
+        cp "${loader_file}" "${ext_dir}/${loader_name}"; \
+        if php -n -d "zend_extension=${ext_dir}/ioncube_loader_lin_7.3.so" -d "extension=${ext_dir}/${loader_name}" -m >/tmp/swoole-loader-check.log 2>&1; then \
+            echo "extension=${loader_name}" > /usr/local/etc/php/conf.d/01-swoole-loader.ini; \
+            echo "Enabled compatible Swoole Loader: ${loader_name}"; \
+        else \
+            echo "Skipping incompatible Swoole Loader: ${loader_name}"; \
+            cat /tmp/swoole-loader-check.log || true; \
+            rm -f "${ext_dir}/${loader_name}"; \
+        fi; \
+        rm -f /tmp/swoole-loader-check.log; \
+    else \
+        echo "No Swoole Loader file found, continuing without it"; \
+    fi
 
 RUN set -eux; \
     apt-get purge -y \
@@ -112,15 +128,15 @@ RUN set -eux; \
         libssl-dev \
         libxml2-dev \
         libzip-dev; \
-    rm -rf /var/lib/apt/lists/* /tmp/ioncube /tmp/ioncube.tar.gz /tmp/zjmf-finance.zip /tmp/swoole_loader_73_zts.so; \
+    apt-get autoremove -y; \
+    rm -rf /var/lib/apt/lists/* /tmp/ioncube /tmp/ioncube.tar.gz /tmp/zjmf-finance.zip; \
     rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 
-COPY files/php.ini /usr/local/etc/php/conf.d/99-zjmf-finance.ini
-COPY files/entrypoint.sh /usr/local/bin/zjmf-finance-entrypoint
-COPY files/fix-session-perms.sh /usr/local/bin/fix-session-perms
-COPY files/zjmf-finance-cron.sh /usr/local/bin/zjmf-finance-cron
-
 RUN set -eux; \
+    cp /opt/zjmf-build-files/php.ini /usr/local/etc/php/conf.d/99-zjmf-finance.ini; \
+    cp /opt/zjmf-build-files/entrypoint.sh /usr/local/bin/zjmf-finance-entrypoint; \
+    cp /opt/zjmf-build-files/fix-session-perms.sh /usr/local/bin/fix-session-perms; \
+    cp /opt/zjmf-build-files/zjmf-finance-cron.sh /usr/local/bin/zjmf-finance-cron; \
     sed -i 's/\r$//' /usr/local/bin/zjmf-finance-entrypoint /usr/local/bin/fix-session-perms /usr/local/bin/zjmf-finance-cron; \
     chmod +x /usr/local/bin/zjmf-finance-entrypoint /usr/local/bin/fix-session-perms /usr/local/bin/zjmf-finance-cron; \
     mkdir -p /run/php /var/log/supervisor /var/www/html /tmp/session; \
