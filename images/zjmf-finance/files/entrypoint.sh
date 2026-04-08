@@ -32,22 +32,7 @@ fix_permissions() {
     fi
 }
 
-fix_session_dir() {
-    SESSION_DIR="/tmp/session"
-    if [ ! -d "${SESSION_DIR}" ]; then
-        echo "Creating session directory ${SESSION_DIR}" >&2
-        mkdir -p "${SESSION_DIR}"
-    fi
-
-    current_perms="$(stat -c '%a' "${SESSION_DIR}" 2>/dev/null || echo "000")"
-    if [ "${current_perms}" != "777" ]; then
-        echo "Fixing session directory permissions: ${current_perms} -> 777" >&2
-        chmod 777 "${SESSION_DIR}"
-    fi
-}
-
 maybe_seed_app
 fix_permissions
-fix_session_dir
 
 exec docker-php-entrypoint "$@"
