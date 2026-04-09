@@ -1,3 +1,23 @@
+FROM php:7.3-fpm AS zjmf-source
+
+ARG APP_DOWNLOAD_URL=https://codeload.github.com/idcsmart/ZJMF-CBAP/zip/refs/heads/main
+ARG APP_SOURCE_SUBDIR=10.4.6
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        unzip; \
+    mkdir -p /out /tmp/app-src; \
+    curl -fsSL "${APP_DOWNLOAD_URL}" -o /tmp/app.zip; \
+    unzip -q /tmp/app.zip -d /tmp/app-src; \
+    src_dir="$(find /tmp/app-src -mindepth 2 -maxdepth 2 -type d -name "${APP_SOURCE_SUBDIR}" | head -n 1)"; \
+    [ -n "${src_dir}" ]; \
+    cp -a "${src_dir}/." /out/; \
+    test -f /out/public/index.php; \
+    rm -rf /var/lib/apt/lists/* /tmp/app-src /tmp/app.zip
+
 FROM php:7.3-fpm
 
 ARG TZ=Asia/Shanghai
@@ -11,6 +31,7 @@ ENV APP_DOCUMENT_ROOT=/var/www/html/public \
     TZ=${TZ}
 
 COPY images/zjmf/files/swoole_loader_73_zts.so /tmp/swoole_loader_73_zts.so
+COPY --from=zjmf-source /out/ /opt/zjmf-seed/
 
 RUN set -eux; \
     apt-get update; \
@@ -30,29 +51,14 @@ RUN set -eux; \
         supervisor \
         unzip \
         tzdata; \
-    rm -rf /var/lib/apt/lists/*; \
     ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime; \
-    echo "${TZ}" > /etc/timezone
-
-RUN set -eux; \
-    mkdir -p /tmp/app-src "${APP_SEED_DIR}"; \
-    curl -fsSL "${APP_DOWNLOAD_URL}" -o /tmp/app.zip; \
-    unzip -q /tmp/app.zip -d /tmp/app-src; \
-    src_dir="$(find /tmp/app-src -mindepth 2 -maxdepth 2 -type d -name "${APP_SOURCE_SUBDIR}" | head -n 1)"; \
-    [ -n "${src_dir}" ]; \
-    cp -a "${src_dir}/." "${APP_SEED_DIR}/"; \
-    test -f "${APP_SEED_DIR}/public/index.php"; \
-    rm -rf /tmp/app-src /tmp/app.zip
-
-RUN set -eux; \
+    echo "${TZ}" > /etc/timezone; \
     docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/; \
     docker-php-ext-install -j"$(nproc)" bcmath gd mysqli opcache pdo_mysql zip; \
     php -m | grep -Ei '^fileinfo$' >/dev/null; \
     php -m | grep -Ei '^bcmath$' >/dev/null; \
     php -m | grep -Ei '^gd$' >/dev/null; \
-    php -r "exit(extension_loaded('gd') && !empty(gd_info()['FreeType Support']) ? 0 : 1);"
-
-RUN set -eux; \
+    php -r "exit(extension_loaded('gd') && !empty(gd_info()['FreeType Support']) ? 0 : 1);"; \
     docker-php-ext-install -j"$(nproc)" \
         calendar \
         curl \
@@ -71,9 +77,7 @@ RUN set -eux; \
     php -m | grep -Ei '^mbstring$' >/dev/null; \
     php -m | grep -Ei '^curl$' >/dev/null; \
     php -m | grep -Ei '^intl$' >/dev/null; \
-    php -m | grep -Ei '^soap$' >/dev/null
-
-RUN set -eux; \
+    php -m | grep -Ei '^soap$' >/dev/null; \
     arch="$(dpkg --print-architecture)"; \
     case "${arch}" in \
         amd64) ioncube_arch='x86-64' ;; \
@@ -87,9 +91,8 @@ RUN set -eux; \
     cp /tmp/swoole_loader_73_zts.so "${ext_dir}/swoole_loader_73_zts.so"; \
     echo "zend_extension=${ext_dir}/ioncube_loader_lin_7.3.so" > /usr/local/etc/php/conf.d/00-ioncube.ini; \
     test -f "${ext_dir}/ioncube_loader_lin_7.3.so"; \
-    test -f "${ext_dir}/swoole_loader_73_zts.so"
-
-RUN set -eux; \
+    test -f "${ext_dir}/swoole_loader_73_zts.so"; \
+    test -f "${APP_SEED_DIR}/public/index.php"; \
     apt-get purge -y \
         libcurl4-openssl-dev \
         libfreetype6-dev \
@@ -135,15 +138,21 @@ RUN set -eux; \
         '    }' \
         '' \
         '    location / {' \
-        '        try_files $uri $uri/ /index.php?s=$uri&$query_string;' \
+        '        if (!-e $request_filename) {' \
+        '            rewrite ^/(.*)$ /index.php?s=/$1 last;' \
+        '            break;' \
+        '        }' \
         '    }' \
         '' \
-        '    location ~ \.php$ {' \
+        '    location ~ \.php($|/) {' \
+        '        fastcgi_split_path_info ^(.+?\.php)(/.*)$;' \
         '        include fastcgi_params;' \
         '        fastcgi_pass 127.0.0.1:9000;' \
         '        fastcgi_index index.php;' \
         '        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;' \
         '        fastcgi_param DOCUMENT_ROOT $document_root;' \
+        '        fastcgi_param PATH_INFO $fastcgi_path_info;' \
+        '        fastcgi_param SCRIPT_NAME $fastcgi_script_name;' \
         '        fastcgi_read_timeout 3600;' \
         '    }' \
         '' \

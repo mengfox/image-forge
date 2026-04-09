@@ -1,10 +1,24 @@
+FROM php:7.3-fpm AS zjmf-finance-source
+
+COPY source/zjmf-finance-3.7.0.zip /tmp/zjmf-finance.zip
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends unzip; \
+    mkdir -p /out /tmp/app-src; \
+    unzip -q /tmp/zjmf-finance.zip -d /tmp/app-src; \
+    src_dir="$(find /tmp/app-src -mindepth 1 -maxdepth 1 -type d | head -n 1)"; \
+    [ -n "${src_dir}" ]; \
+    cp -a "${src_dir}/." /out/; \
+    test -f /out/public/index.php; \
+    rm -rf /var/lib/apt/lists/* /tmp/app-src /tmp/zjmf-finance.zip
+
 FROM php:7.3-fpm
 
 ARG TZ=Asia/Shanghai
 
 ENV APP_DOCUMENT_ROOT=/var/www/html/public \
     APP_SEED_DIR=/opt/zjmf-finance-seed \
-    APP_PACKAGE_FILE=/tmp/zjmf-finance.zip \
     DEBIAN_FRONTEND=noninteractive \
     TZ=${TZ} \
     CRON_ENABLED=true \
@@ -13,8 +27,8 @@ ENV APP_DOCUMENT_ROOT=/var/www/html/public \
     CRON_RUN_ON_START=true \
     SESSION_DIR=/tmp/session
 
-COPY source/zjmf-finance-3.7.0.zip /tmp/zjmf-finance.zip
 COPY files/swoole_loader_73_nts.so /tmp/swoole_loader_73_nts.so
+COPY --from=zjmf-finance-source /out/ /opt/zjmf-finance-seed/
 
 RUN set -eux; \
     apt-get update; \
@@ -35,20 +49,8 @@ RUN set -eux; \
         supervisor \
         unzip \
         tzdata; \
-    rm -rf /var/lib/apt/lists/*; \
     ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime; \
-    echo "${TZ}" > /etc/timezone
-
-RUN set -eux; \
-    mkdir -p /tmp/app-src "${APP_SEED_DIR}"; \
-    unzip -q "${APP_PACKAGE_FILE}" -d /tmp/app-src; \
-    src_dir="$(find /tmp/app-src -mindepth 1 -maxdepth 1 -type d | head -n 1)"; \
-    [ -n "${src_dir}" ]; \
-    cp -a "${src_dir}/." "${APP_SEED_DIR}/"; \
-    test -f "${APP_SEED_DIR}/public/index.php"; \
-    rm -rf /tmp/app-src
-
-RUN set -eux; \
+    echo "${TZ}" > /etc/timezone; \
     docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/; \
     docker-php-ext-install -j"$(nproc)" \
         bcmath \
@@ -81,9 +83,7 @@ RUN set -eux; \
     php -m | grep -Ei '^soap$' >/dev/null; \
     php -m | grep -Ei '^xml$' >/dev/null; \
     php -m | grep -Ei '^zip$' >/dev/null; \
-    php -r "exit(extension_loaded('gd') && !empty(gd_info()['FreeType Support']) ? 0 : 1);"
-
-RUN set -eux; \
+    php -r "exit(extension_loaded('gd') && !empty(gd_info()['FreeType Support']) ? 0 : 1);"; \
     arch="$(dpkg --print-architecture)"; \
     case "${arch}" in \
         amd64) ioncube_arch='x86-64' ;; \
@@ -98,9 +98,8 @@ RUN set -eux; \
     echo "zend_extension=${ext_dir}/ioncube_loader_lin_7.3.so" > /usr/local/etc/php/conf.d/00-ioncube.ini; \
     echo "extension=swoole_loader_73_nts.so" > /usr/local/etc/php/conf.d/01-swoole-loader.ini; \
     test -f "${ext_dir}/ioncube_loader_lin_7.3.so"; \
-    test -f "${ext_dir}/swoole_loader_73_nts.so"
-
-RUN set -eux; \
+    test -f "${ext_dir}/swoole_loader_73_nts.so"; \
+    test -f "${APP_SEED_DIR}/public/index.php"; \
     apt-get purge -y \
         libcurl4-openssl-dev \
         libfreetype6-dev \
@@ -112,7 +111,7 @@ RUN set -eux; \
         libssl-dev \
         libxml2-dev \
         libzip-dev; \
-    rm -rf /var/lib/apt/lists/* /tmp/ioncube /tmp/ioncube.tar.gz /tmp/zjmf-finance.zip /tmp/swoole_loader_73_nts.so; \
+    rm -rf /var/lib/apt/lists/* /tmp/ioncube /tmp/ioncube.tar.gz /tmp/swoole_loader_73_nts.so; \
     rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 
 COPY files/php.ini /usr/local/etc/php/conf.d/99-zjmf-finance.ini
@@ -145,15 +144,21 @@ RUN set -eux; \
         '    }' \
         '' \
         '    location / {' \
-        '        try_files $uri $uri/ /index.php?s=$uri&$query_string;' \
+        '        if (!-e $request_filename) {' \
+        '            rewrite ^/(.*)$ /index.php?s=/$1 last;' \
+        '            break;' \
+        '        }' \
         '    }' \
         '' \
-        '    location ~ \.php$ {' \
+        '    location ~ \.php($|/) {' \
+        '        fastcgi_split_path_info ^(.+?\.php)(/.*)$;' \
         '        include fastcgi_params;' \
         '        fastcgi_pass 127.0.0.1:9000;' \
         '        fastcgi_index index.php;' \
         '        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;' \
         '        fastcgi_param DOCUMENT_ROOT $document_root;' \
+        '        fastcgi_param PATH_INFO $fastcgi_path_info;' \
+        '        fastcgi_param SCRIPT_NAME $fastcgi_script_name;' \
         '        fastcgi_read_timeout 3600;' \
         '    }' \
         '' \
