@@ -14,7 +14,7 @@ ENV APP_DOCUMENT_ROOT=/var/www/html/public \
     SESSION_DIR=/tmp/session
 
 COPY source/zjmf-finance-3.7.0.zip /tmp/zjmf-finance.zip
-COPY files/swoole_loader_73_zts.so /tmp/swoole_loader_73_zts.so
+COPY files/swoole_loader_73_nts.so /tmp/swoole_loader_73_nts.so
 
 RUN set -eux; \
     apt-get update; \
@@ -94,11 +94,11 @@ RUN set -eux; \
     tar -xzf /tmp/ioncube.tar.gz -C /tmp; \
     ext_dir="$(php-config --extension-dir)"; \
     cp "/tmp/ioncube/ioncube_loader_lin_7.3.so" "${ext_dir}/ioncube_loader_lin_7.3.so"; \
-    cp /tmp/swoole_loader_73_zts.so "${ext_dir}/swoole_loader_73_zts.so"; \
+    cp /tmp/swoole_loader_73_nts.so "${ext_dir}/swoole_loader_73_nts.so"; \
     echo "zend_extension=${ext_dir}/ioncube_loader_lin_7.3.so" > /usr/local/etc/php/conf.d/00-ioncube.ini; \
-    echo "extension=swoole_loader_73_zts.so" > /usr/local/etc/php/conf.d/01-swoole-loader.ini; \
+    echo "extension=swoole_loader_73_nts.so" > /usr/local/etc/php/conf.d/01-swoole-loader.ini; \
     test -f "${ext_dir}/ioncube_loader_lin_7.3.so"; \
-    test -f "${ext_dir}/swoole_loader_73_zts.so"
+    test -f "${ext_dir}/swoole_loader_73_nts.so"
 
 RUN set -eux; \
     apt-get purge -y \
@@ -112,7 +112,7 @@ RUN set -eux; \
         libssl-dev \
         libxml2-dev \
         libzip-dev; \
-    rm -rf /var/lib/apt/lists/* /tmp/ioncube /tmp/ioncube.tar.gz /tmp/zjmf-finance.zip /tmp/swoole_loader_73_zts.so; \
+    rm -rf /var/lib/apt/lists/* /tmp/ioncube /tmp/ioncube.tar.gz /tmp/zjmf-finance.zip /tmp/swoole_loader_73_nts.so; \
     rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 
 COPY files/php.ini /usr/local/etc/php/conf.d/99-zjmf-finance.ini
