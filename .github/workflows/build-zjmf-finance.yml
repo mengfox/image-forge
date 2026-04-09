@@ -19,10 +19,6 @@ concurrency:
   group: build-zjmf-finance-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  DOCKERHUB_IMAGE: docker.io/mengfox/zjmf-finance
-  GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/zjmf-finance
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,6 +30,13 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
+      - name: 准备镜像名称
+        id: prep
+        shell: bash
+        run: |
+          echo "ghcr_image=ghcr.io/${{ github.repository_owner }}/image-forge/zjmf-finance" >> "$GITHUB_OUTPUT"
+          echo "dockerhub_image=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/zjmf-finance" >> "$GITHUB_OUTPUT"
+
       - name: 初始化 Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -42,8 +45,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
 
       - name: 登录 Docker Hub
         if: github.event_name != 'pull_request'
@@ -57,8 +60,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ env.GHCR_IMAGE }}
-            ${{ env.DOCKERHUB_IMAGE }}
+            ${{ steps.prep.outputs.ghcr_image }}
+            ${{ steps.prep.outputs.dockerhub_image }}
           tags: |
             type=ref,event=tag
             type=sha

@@ -3,7 +3,7 @@ services:
     build:
       context: ./images/zjmf-finance
       dockerfile: Dockerfile
-    image: mengfox/zjmf-finance:latest
+    image: zjmf-finance:latest
     container_name: zjmf-finance
     restart: unless-stopped
     ports:
@@ -17,4 +17,3 @@ services:
       SESSION_DIR: "/tmp/session"
     volumes:
       - ../../data/zjmf-finance:/var/www/html
-      - ../../data/zjmf-finance-session:/tmp/session
