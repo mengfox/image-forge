@@ -5,7 +5,7 @@ on:
     branches:
       - main
     tags:
-      - "v*"
+      - "zjmf-v*"
     paths:
       - ".github/workflows/build-zjmf.yml"
       - "images/zjmf/**"

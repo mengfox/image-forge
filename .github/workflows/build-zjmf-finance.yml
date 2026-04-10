@@ -5,7 +5,7 @@ on:
     branches:
       - main
     tags:
-      - "v*"
+      - "zjmf-finance-v*"
     paths:
       - ".github/workflows/build-zjmf-finance.yml"
       - "images/zjmf-finance/**"

@@ -1,6 +1,13 @@
-﻿# 更新日志
+# 更新日志
 
 本仓库用于维护 `image-forge` 下的容器镜像与 1Panel 应用模板变更记录。
+
+## 2026-04-10
+
+### lskypro-v2
+
+- 新增 `build-lskypro-v2.yml`，支持在 GitHub Actions 中构建并发布 `lskypro-v2` 镜像。
+- 修复 `lskypro-v2` Dockerfile 中构建阶段与运行阶段 PHP 版本不一致的问题，避免扩展二进制不兼容。
 
 ## 2026-04-07
 
@@ -30,4 +37,4 @@
 - 新增对应的 1Panel 本地应用模板“魔方财务系统”。
 - 1Panel 启动包装脚本支持把数据库地址、端口、用户名、密码、数据库名和后台路径预填到官方安装页 `public/install.html`。
 - 1Panel 初始化脚本只负责准备持久化目录，不修改基础镜像层，正式安装仍走官方安装流程。
-- 新增 `build-zjmf-finance.yml`，支持把镜像自动发布到 GHCR 与 Docker Hub。��
+- 新增 `build-zjmf-finance.yml`，支持把镜像自动发布到 GHCR 与 Docker Hub。
