@@ -95,6 +95,7 @@ FROM php:8.3-fpm-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai
+ENV APP_RUNNING_IN_DOCKER=false
 ENV APP_DIR=/var/www/html
 ENV DEFAULT_SITE_DIR=/opt/default-site
 

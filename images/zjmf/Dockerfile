@@ -25,12 +25,13 @@ ARG APP_DOWNLOAD_URL=https://codeload.github.com/idcsmart/ZJMF-CBAP/zip/refs/hea
 ARG APP_SOURCE_SUBDIR=10.4.6
 
 ENV APP_DOCUMENT_ROOT=/var/www/html/public \
+    APP_RUNNING_IN_DOCKER=false \
     APP_SEED_DIR=/opt/zjmf-seed \
     DEBIAN_FRONTEND=noninteractive \
     ENABLE_SWOOLE_LOADER=0 \
     TZ=${TZ}
 
-COPY images/zjmf/files/swoole_loader_73_zts.so /tmp/swoole_loader_73_zts.so
+COPY files/swoole_loader_73_zts.so /tmp/swoole_loader_73_zts.so
 COPY --from=zjmf-source /out/ /opt/zjmf-seed/
 
 RUN set -eux; \
@@ -106,9 +107,9 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/* /tmp/ioncube /tmp/ioncube.tar.gz /tmp/swoole_loader_73_zts.so; \
     rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 
-COPY images/zjmf/files/php.ini /usr/local/etc/php/conf.d/99-zjmf.ini
-COPY images/zjmf/files/entrypoint.sh /usr/local/bin/zjmf-entrypoint
-COPY images/zjmf/files/automation-loop.sh /usr/local/bin/zjmf-automation-loop
+COPY files/php.ini /usr/local/etc/php/conf.d/99-zjmf.ini
+COPY files/entrypoint.sh /usr/local/bin/zjmf-entrypoint
+COPY files/automation-loop.sh /usr/local/bin/zjmf-automation-loop
 
 RUN set -eux; \
     if [ "$(head -c 3 /usr/local/bin/zjmf-entrypoint | od -An -t x1 | tr -d ' \n')" = "efbbbf" ]; then \

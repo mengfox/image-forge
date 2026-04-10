@@ -18,6 +18,7 @@ FROM php:7.3-fpm
 ARG TZ=Asia/Shanghai
 
 ENV APP_DOCUMENT_ROOT=/var/www/html/public \
+    APP_RUNNING_IN_DOCKER=false \
     APP_SEED_DIR=/opt/zjmf-finance-seed \
     DEBIAN_FRONTEND=noninteractive \
     TZ=${TZ} \
